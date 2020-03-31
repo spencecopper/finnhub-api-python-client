@@ -35,7 +35,10 @@ class Client:
 
         response = getattr(self.session, method)(uri, **kwargs)
 
-        return self._handle_response(response)
+        if kwargs['params']['format'] == 'csv':
+            return self._handle_response(response, format='csv')
+        else:
+            return self._handle_response(response)
 
     def _create_api_uri(self, path):
         return "{}/{}".format(self.API_URL, path)
@@ -44,11 +47,14 @@ class Client:
         uri = self._create_api_uri(path)
         return self._request(method, uri, **kwargs)
 
-    def _handle_response(self, response):
+    def _handle_response(self, response, format='json'):
         if not str(response.status_code).startswith('2'):
             raise FinnhubAPIException(response)
         try:
-            return response.json()
+            if format == 'csv':
+                return response.text
+            else:
+                return response.json()
         except ValueError:
             raise FinnhubRequestException("Invalid Response: {}".format(response.text))
 
